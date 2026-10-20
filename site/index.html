@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Rafael & Thatiany · 26.06.2027</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Jost:wght@300;400&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --marsala-pastel: #B5858C;
+      --marsala-profundo: #7A4A52;
+      --off-white: #FBF7F2;
+      --bege: #E9DDCD;
+      --oliva: #9AA48A;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      min-height: 100vh;
+      background: var(--off-white);
+      color: var(--marsala-profundo);
+      font-family: 'Jost', 'Lato', sans-serif;
+      font-weight: 300;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1.25rem;
+    }
+    main {
+      max-width: 420px;
+      width: 100%;
+      text-align: center;
+    }
+    .foto {
+      width: 100%;
+      aspect-ratio: 4 / 5;
+      object-fit: cover;
+      border-radius: 200px 200px 16px 16px;
+      border: 8px solid var(--bege);
+      background: var(--bege);
+      display: block;
+      margin: 0 auto 2rem;
+    }
+    h1 {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-weight: 600;
+      font-size: 2.4rem;
+      line-height: 1.1;
+      color: var(--marsala-pastel);
+    }
+    h1 span {
+      display: block;
+      font-style: italic;
+      font-weight: 400;
+      font-size: 1.4rem;
+      color: var(--oliva);
+      margin: 0.3rem 0;
+    }
+    .data {
+      margin-top: 1rem;
+      letter-spacing: 0.2em;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+    }
+    .aviso {
+      margin-top: 2rem;
+      padding: 1.25rem 1.5rem;
+      background: var(--bege);
+      border-radius: 12px;
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: 1.25rem;
+      font-style: italic;
+      line-height: 1.4;
+    }
+    .aviso small {
+      display: block;
+      margin-top: 0.4rem;
+      font-family: 'Jost', sans-serif;
+      font-style: normal;
+      font-size: 0.8rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--marsala-profundo);
+    }
+    @media (prefers-reduced-motion: no-preference) {
+      main { animation: fade 1.2s ease both; }
+      @keyframes fade { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <img class="foto" src="assets/foto-casal.jpg" alt="Rafael e Thatiany" onerror="this.style.display='none'">
+    <h1>Rafael <span>&amp;</span> Thatiany</h1>
+    <p class="data">26 . 06 . 2027 · Santos/SP</p>
+    <div class="aviso">
+      Estamos preparando algo especial com muito carinho.
+      <small>Site em desenvolvimento · volte em breve 💕</small>
+    </div>
+  </main>
+</body>
+</html>
