@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Confirmação de presença</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Jost:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/styles.css">
+  <style>
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #FBF7F2 0%, #E9DDCD 100%);
+      padding: 2rem 1rem;
+    }
+
+    .card {
+      width: min(680px, 100%);
+      background: rgba(255,255,255,0.78);
+      border: 1px solid rgba(122,74,82,0.1);
+      border-radius: 24px;
+      box-shadow: 0 20px 50px rgba(122,74,82,0.08);
+      padding: 2rem 1.5rem;
+    }
+
+    .eyebrow {
+      display: inline-block;
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      font-size: 0.76rem;
+      color: #B5858C;
+      margin-bottom: 1rem;
+    }
+
+    h1 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(2.4rem, 6vw, 4rem);
+      color: #7A4A52;
+      margin-bottom: 0.5rem;
+    }
+
+    .intro {
+      color: rgba(122,74,82,0.8);
+      margin-bottom: 1.5rem;
+      line-height: 1.6;
+    }
+
+    .field {
+      display: grid;
+      gap: 0.5rem;
+      margin-bottom: 1.2rem;
+    }
+
+    label[for="nome"] {
+      font-size: 0.8rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #B5858C;
+      font-weight: 500;
+    }
+
+    #nome {
+      width: 100%;
+      border: 1px solid rgba(122,74,82,0.14);
+      background: rgba(255,255,255,0.9);
+      border-radius: 14px;
+      padding: 0.9rem 1rem;
+      font-size: 1rem;
+      color: #7A4A52;
+    }
+
+    .button-row {
+      display: flex;
+      gap: 0.75rem;
+      margin-top: 0.5rem;
+    }
+
+    button {
+      border: none;
+      border-radius: 999px;
+      padding: 0.95rem 1rem;
+      background: #7A4A52;
+      color: #FBF7F2;
+      font-size: 0.8rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    #buscarConvite {
+      width: 100%;
+    }
+
+    .resultado,
+    .mensagem {
+      margin-top: 1.5rem;
+      padding: 1rem 1.1rem;
+      border-radius: 14px;
+      background: rgba(154,164,138,0.1);
+      color: #7A4A52;
+      display: none;
+    }
+
+    .resultado.visible,
+    .mensagem.visible {
+      display: block;
+    }
+
+    .lista {
+      display: grid;
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+
+    .pessoa {
+      background: rgba(233,221,205,0.35);
+      border: 1px solid rgba(122,74,82,0.08);
+      border-radius: 18px;
+      padding: 1rem;
+    }
+
+    .nome-pessoa {
+      font-weight: 600;
+      margin-bottom: 0.8rem;
+      font-size: 1.05rem;
+    }
+
+    .opcoes {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.65rem;
+    }
+
+    .opcoes label {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.55rem 0.8rem;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.6);
+      border: 1px solid rgba(122,74,82,0.1);
+      font-size: 0.8rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #7A4A52;
+    }
+
+    .opcoes input {
+      accent-color: #7A4A52;
+    }
+
+    #salvarConfirmacao {
+      width: 100%;
+      margin-top: 1.25rem;
+      background: #9AA48A;
+    }
+
+    .mensagem.success {
+      background: rgba(154,164,138,0.16);
+      color: #3f5547;
+    }
+
+    .mensagem.error {
+      background: rgba(181,133,140,0.12);
+      color: #7A4A52;
+    }
+
+    @media (max-width: 560px) {
+      .opcoes {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body data-page="confirmacao">
+  <main class="card">
+    <span class="eyebrow">Confirmação</span>
+    <h1>Seu convite</h1>
+    <p class="intro">Digite seu nome completo para localizar sua presença. Você pode confirmar cada pessoa separadamente antes do prazo.</p>
+
+    <div class="field">
+      <label for="nome">Nome completo</label>
+      <input id="nome" type="text" placeholder="Ex: Maria da Silva">
+    </div>
+
+    <button type="button" id="buscarConvite">Buscar convite</button>
+
+    <div id="resultado" class="resultado" aria-live="polite"></div>
+    <div id="listaConvidados" class="lista" aria-live="polite"></div>
+    <button type="button" id="salvarConfirmacao">Salvar confirmação</button>
+    <div id="mensagemStatus" class="mensagem" aria-live="polite"></div>
+  </main>
+
+  <script src="../js/script.js"></script>
+</body>
+</html>

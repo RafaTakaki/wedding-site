@@ -1,0 +1,29 @@
+# Build
+bin/
+obj/
+TestResults/
+
+# IDE
+.vscode/
+.vs/
+*.user
+*.suo
+
+# Sistema
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Ambiente
+.env
+appsettings.Development.json
+
+# Compilados
+*.dll
+*.exe
+*.pdb
+
+src/WeddingPhotoshoot.Domain/obj/Debug/net10.0/WeddingPhotoshoot.Domain.GlobalUsings.g.cs
+src/WeddingPhotoshoot.Domain/obj/Debug/net10.0/WeddingPhotoshoot.Domain.GeneratedMSBuildEditorConfig.editorconfig

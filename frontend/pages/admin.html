@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Painel Administrativo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Jost:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/styles.css">
+  <style>
+    body {
+      background: #FBF7F2;
+      padding: 2rem 1rem;
+      font-family: 'Jost', sans-serif;
+      color: #7A4A52;
+    }
+
+    .container {
+      width: min(980px, 100%);
+      margin: 0 auto;
+      background: rgba(255,255,255,0.75);
+      border: 1px solid rgba(122,74,82,0.1);
+      border-radius: 20px;
+      padding: 2rem;
+    }
+
+    h1 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(2.4rem, 5vw, 3.5rem);
+      color: #7A4A52;
+      margin-bottom: 1rem;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+
+    .card {
+      background: rgba(233,221,205,0.4);
+      border-radius: 18px;
+      padding: 1.2rem;
+      border: 1px solid rgba(122,74,82,0.08);
+    }
+
+    .card strong {
+      display: block;
+      font-size: 0.74rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: #B5858C;
+      margin-bottom: 0.6rem;
+    }
+
+    .card span {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 2.5rem;
+      color: #7A4A52;
+    }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <h1>Painel administrativo</h1>
+
+    <div class="grid">
+      <div class="card">
+        <strong>Vou</strong>
+        <span>48</span>
+      </div>
+      <div class="card">
+        <strong>Não vou</strong>
+        <span>12</span>
+      </div>
+      <div class="card">
+        <strong>A confirmar</strong>
+        <span>90</span>
+      </div>
+    </div>
+  </main>
+</body>
+</html>

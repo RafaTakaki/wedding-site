@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Lista de presentes</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Jost:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/styles.css">
+  <style>
+    body {
+      background: linear-gradient(180deg, #fffdfb 0%, #f8f2ec 100%);
+      padding: 0;
+    }
+
+    .page-shell {
+      width: min(1100px, calc(100% - 2rem));
+      margin: 0 auto;
+      padding: 2rem 0 4rem;
+    }
+
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .back-link {
+      color: var(--marsala-profundo);
+      text-decoration: none;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      font-size: 0.72rem;
+    }
+
+    .presentes-hero {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 2rem;
+      align-items: center;
+      margin-bottom: 2.5rem;
+    }
+
+    .presentes-hero h1 {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: clamp(3rem, 6vw, 5rem);
+      color: var(--marsala-profundo);
+      margin-bottom: 0.8rem;
+    }
+
+    .presentes-hero p {
+      color: rgba(122,74,82,0.82);
+      line-height: 1.8;
+      max-width: 560px;
+    }
+
+    .pix-box {
+      background: rgba(255,255,255,0.7);
+      border: 1px solid rgba(122,74,82,0.08);
+      border-radius: 24px;
+      padding: 1.5rem;
+      box-shadow: 0 18px 30px rgba(122,74,82,0.04);
+    }
+
+    .pix-box strong {
+      display: block;
+      font-size: 0.76rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--marsala-pastel);
+      margin-bottom: 0.8rem;
+    }
+
+    .pix-code {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--marsala-profundo);
+      word-break: break-word;
+      margin-bottom: 1rem;
+    }
+
+    .copy-btn,
+    .reserve-btn {
+      border: none;
+      border-radius: 999px;
+      padding: 0.75rem 1rem;
+      background: var(--marsala-profundo);
+      color: var(--off-white);
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      font-size: 0.72rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .gift-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 1.5rem;
+      margin-top: 1.5rem;
+    }
+
+    .gift-card {
+      background: rgba(255,255,255,0.7);
+      border: 1px solid rgba(122,74,82,0.08);
+      border-radius: 22px;
+      padding: 1.25rem;
+      box-shadow: 0 16px 28px rgba(122,74,82,0.04);
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .gift-illustration {
+      min-height: 160px;
+      border-radius: 18px;
+      background: linear-gradient(135deg, rgba(233,221,205,0.9), rgba(181,133,140,0.35));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--marsala-profundo);
+      font-size: 0.72rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .gift-card h2 {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: 2.2rem;
+      color: var(--marsala-profundo);
+    }
+
+    .gift-card p {
+      color: rgba(122,74,82,0.82);
+      line-height: 1.7;
+    }
+
+    .gift-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      margin-top: auto;
+    }
+
+    .gift-status {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.4rem 0.7rem;
+      border-radius: 999px;
+      background: rgba(154,164,138,0.14);
+      color: var(--marsala-profundo);
+      font-size: 0.7rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .gift-status.reserved {
+      background: rgba(122,74,82,0.12);
+      color: var(--marsala-profundo);
+    }
+
+    @media (max-width: 820px) {
+      .presentes-hero,
+      .gift-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+    }
+  </style>
+</head>
+<body data-page="presentes">
+  <div class="page-shell">
+    <header class="page-header">
+      <a class="back-link" href="inicio.html">← Voltar para a home</a>
+      <div class="brand">Rafael &amp; Thatiany</div>
+    </header>
+
+    <section class="presentes-hero">
+      <div>
+        <span class="eyebrow">Lista de presentes</span>
+        <h1>Seu carinho faz parte da nossa história</h1>
+        <p>Ao escolher um presente, você nos ajuda a começar essa nova etapa com muito mais alegria, conforto e amor. Qualquer gesto será recebido com muito carinho.</p>
+      </div>
+
+      <aside class="pix-box">
+        <strong>Chave PIX</strong>
+        <div class="pix-code">rafael.thatiany@pix.com.br</div>
+        <button class="copy-btn" type="button" data-copy-pix="rafael.thatiany@pix.com.br">Copiar chave</button>
+      </aside>
+    </section>
+
+    <main>
+      <div class="gift-grid">
+        <article class="gift-card">
+          <div class="gift-illustration">Jantar</div>
+          <div>
+            <strong>Jantar especial</strong>
+            <p>Uma experiência para celebrar conosco em um momento tão especial.</p>
+          </div>
+          <div class="gift-meta">
+            <span class="gift-status">Disponível</span>
+            <button class="reserve-btn" type="button" data-reserve-item>Reservar</button>
+          </div>
+        </article>
+
+        <article class="gift-card">
+          <div class="gift-illustration">Casa</div>
+          <div>
+            <strong>Casa nova</strong>
+            <p>Contribua para o começo do nosso lar e dos nossos sonhos juntos.</p>
+          </div>
+          <div class="gift-meta">
+            <span class="gift-status">Disponível</span>
+            <button class="reserve-btn" type="button" data-reserve-item>Reservar</button>
+          </div>
+        </article>
+
+        <article class="gift-card">
+          <div class="gift-illustration">Viagem</div>
+          <div>
+            <strong>Lua de mel</strong>
+            <p>Ajude-nos a criar memórias inesquecíveis nos primeiros passos juntos.</p>
+          </div>
+          <div class="gift-meta">
+            <span class="gift-status">Disponível</span>
+            <button class="reserve-btn" type="button" data-reserve-item>Reservar</button>
+          </div>
+        </article>
+      </div>
+    </main>
+  </div>
+
+  <script src="../js/script.js"></script>
+</body>
+</html>
