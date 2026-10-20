@@ -20,7 +20,24 @@ document.addEventListener('DOMContentLoaded', () => {
   if (page === 'presentes') {
     initPresentesPage();
   }
+
+  if (page === 'admin') {
+    initAdminPage();
+  }
 });
+
+function apiBaseUrl() {
+  return (document.body.dataset.apiBase || 'http://localhost:5000').replace(/\/$/, '');
+}
+
+async function readApiError(response) {
+  try {
+    const body = await response.json();
+    return body.message || body.detail || 'Não foi possível concluir a operação.';
+  } catch (error) {
+    return 'Não foi possível conectar ao servidor. Confira se a API está em execução.';
+  }
+}
 
 function initHomePage() {
   const targetDate = new Date('2027-06-26T18:00:00-03:00');
@@ -102,36 +119,7 @@ function initPresentesPage() {
   });
 }
 
-function normalizarNome(valor) {
-  return (valor || '')
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/\s+/g, ' ')
-    .trim()
-    .toLowerCase();
-}
-
 function initConfirmacaoPage() {
-  const convidados = [
-    {
-      id: 'rafael-takaki',
-      nome: 'Rafael Takaki',
-      status: 'a-confirmar',
-      acompanhantes: [
-        { id: 'thatiany-freitas', nome: 'Thatiany Freitas', status: 'a-confirmar' }
-      ]
-    },
-    {
-      id: 'maria-da-silva',
-      nome: 'Maria da Silva',
-      status: 'a-confirmar',
-      acompanhantes: [
-        { id: 'joao-da-silva', nome: 'João da Silva', status: 'a-confirmar' },
-        { id: 'ana-da-silva', nome: 'Ana da Silva', status: 'a-confirmar' }
-      ]
-    }
-  ];
-
   const input = document.getElementById('nome');
   const buscar = document.getElementById('buscarConvite');
   const resultado = document.getElementById('resultado');
@@ -143,103 +131,212 @@ function initConfirmacaoPage() {
     return;
   }
 
+  let conviteAtual = null;
+
   const resetMensagem = () => {
     mensagem.textContent = '';
     mensagem.classList.remove('success', 'error');
   };
 
-  const renderPessoa = (pessoa) => {
-    const statusGrupo = `status-${pessoa.id}`;
-
-    return `
-      <div class="pessoa">
-        <div class="nome-pessoa">${pessoa.nome}</div>
-        <div class="opcoes" role="radiogroup" aria-label="Status de ${pessoa.nome}">
-          <label>
-            <input type="radio" name="${statusGrupo}" value="vou" ${pessoa.status === 'vou' ? 'checked' : ''}>
-            <span>Vou</span>
-          </label>
-          <label>
-            <input type="radio" name="${statusGrupo}" value="nao-vou" ${pessoa.status === 'nao-vou' ? 'checked' : ''}>
-            <span>Não vou</span>
-          </label>
-          <label>
-            <input type="radio" name="${statusGrupo}" value="a-confirmar" ${pessoa.status === 'a-confirmar' ? 'checked' : ''}>
-            <span>A confirmar</span>
-          </label>
-        </div>
-      </div>
-    `;
-  };
-
   const montarLista = (registro) => {
-    const pessoas = [
-      { id: registro.id, nome: registro.nome, status: registro.status },
-      ...registro.acompanhantes.map((acompanhante) => ({
-        id: acompanhante.id,
-        nome: acompanhante.nome,
-        status: acompanhante.status
-      }))
-    ];
+    lista.replaceChildren();
+    registro.people.forEach((person) => {
+      const card = document.createElement('div');
+      card.className = 'pessoa';
+      const name = document.createElement('div');
+      name.className = 'nome-pessoa';
+      name.textContent = person.name;
+      const options = document.createElement('div');
+      options.className = 'opcoes';
+      options.setAttribute('role', 'radiogroup');
+      options.setAttribute('aria-label', `Status de ${person.name}`);
 
-    lista.innerHTML = pessoas.map(renderPessoa).join('');
-
-    lista.querySelectorAll('input[type="radio"]').forEach((radio) => {
-      radio.addEventListener('change', () => {
-        const pessoa = pessoas.find((item) => `status-${item.id}` === radio.name);
-        if (pessoa) {
-          pessoa.status = radio.value;
-        }
+      [
+        ['vou', 'Vou'],
+        ['nao-vou', 'Não vou'],
+        ['a-confirmar', 'A confirmar']
+      ].forEach(([value, labelText]) => {
+        const label = document.createElement('label');
+        const radio = document.createElement('input');
+        radio.type = 'radio';
+        radio.name = `status-${person.id}`;
+        radio.value = value;
+        radio.checked = person.status === value;
+        radio.disabled = !registro.isRsvpOpen || person.status !== 'a-confirmar';
+        label.append(radio, document.createTextNode(labelText));
+        options.append(label);
       });
+
+      card.append(name, options);
+      lista.append(card);
     });
+
+    salvar.disabled = !registro.isRsvpOpen || !registro.people.some((person) => person.status === 'a-confirmar');
+    if (!registro.isRsvpOpen) {
+      mensagem.textContent = 'O prazo para confirmação terminou. Entre em contato com os noivos.';
+      mensagem.classList.add('visible', 'error');
+    }
   };
 
   const atualizarResultado = (registro) => {
+    resultado.replaceChildren();
     resultado.classList.add('visible');
-    resultado.innerHTML = `
-      <strong>Convidado encontrado:</strong> ${registro.nome}<br>
-      <small>Você pode confirmar cada pessoa individualmente antes do prazo.</small>
-    `;
+    const title = document.createElement('strong');
+    title.textContent = `Convite encontrado: ${registro.name}`;
+    const detail = document.createElement('small');
+    detail.textContent = 'Confirme cada pessoa individualmente antes do prazo.';
+    resultado.append(title, document.createElement('br'), detail);
   };
 
-  buscar.addEventListener('click', () => {
+  buscar.addEventListener('click', async () => {
     resetMensagem();
     const valor = input.value.trim();
+    lista.replaceChildren();
+    conviteAtual = null;
 
     if (!valor) {
       resultado.classList.add('visible');
-      resultado.innerHTML = 'Digite seu nome completo para continuar.';
-      lista.innerHTML = '';
+      resultado.textContent = 'Digite seu nome completo para continuar.';
       return;
     }
 
-    const registro = convidados.find((item) => normalizarNome(item.nome) === normalizarNome(valor));
-
-    if (!registro) {
+    buscar.disabled = true;
+    try {
+      const response = await fetch(`${apiBaseUrl()}/api/guests/lookup?name=${encodeURIComponent(valor)}`);
+      if (!response.ok) throw new Error(await readApiError(response));
+      conviteAtual = await response.json();
+      atualizarResultado(conviteAtual);
+      montarLista(conviteAtual);
+    } catch (error) {
       resultado.classList.add('visible');
-      resultado.innerHTML = 'Não encontramos seu nome. Entre em contato com os noivos ou com a acessora.';
-      lista.innerHTML = '';
-      return;
+      resultado.textContent = error.message;
+    } finally {
+      buscar.disabled = false;
     }
-
-    atualizarResultado(registro);
-    montarLista(registro);
   });
 
-  salvar.addEventListener('click', () => {
-    const radios = document.querySelectorAll('input[type="radio"]:checked');
-    const total = radios.length;
+  salvar.addEventListener('click', async () => {
+    if (!conviteAtual) return;
+    const answers = conviteAtual.people
+      .filter((person) => person.status === 'a-confirmar')
+      .map((person) => ({
+        inviteeId: person.id,
+        status: lista.querySelector(`input[name="status-${person.id}"]:checked`)?.value || person.status
+      }));
 
-    if (!total) {
-      mensagem.textContent = 'Selecione ao menos uma resposta para salvar.';
-      mensagem.classList.add('error');
+    if (!answers.some((answer) => answer.status !== 'a-confirmar')) {
+      mensagem.textContent = 'Escolha Vou ou Não vou para pelo menos uma pessoa.';
+      mensagem.classList.add('visible', 'error');
       return;
     }
 
-    const resumo = Array.from(radios).map((radio) => `${radio.name.replace('status-', '')}: ${radio.value}`);
+    salvar.disabled = true;
+    try {
+      const response = await fetch(`${apiBaseUrl()}/api/guests/rsvp/${encodeURIComponent(conviteAtual.rsvpToken)}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ answers })
+      });
+      if (!response.ok) throw new Error(await readApiError(response));
+      answers.forEach((answer) => {
+        const person = conviteAtual.people.find((item) => item.id === answer.inviteeId);
+        if (person) person.status = answer.status;
+      });
+      montarLista(conviteAtual);
+      mensagem.textContent = 'Confirmação salva. Respostas enviadas não podem ser alteradas pelo site.';
+      mensagem.classList.add('visible', 'success');
+    } catch (error) {
+      mensagem.textContent = error.message;
+      mensagem.classList.add('visible', 'error');
+      salvar.disabled = false;
+    }
+  });
+}
 
-    mensagem.textContent = `Confirmação salva com sucesso. ${resumo.length} pessoa(s) atualizadas.`;
-    mensagem.classList.add('success');
+function initAdminPage() {
+  const connectForm = document.getElementById('adminConnectForm');
+  const keyInput = document.getElementById('adminKey');
+  const createForm = document.getElementById('guestCreateForm');
+  const message = document.getElementById('adminMessage');
+  const guestList = document.getElementById('guestList');
+  let adminKey = '';
+
+  const adminFetch = (path, options = {}) => fetch(`${apiBaseUrl()}${path}`, {
+    ...options,
+    headers: {
+      ...options.headers,
+      'X-Admin-Key': adminKey
+    }
+  });
+
+  const loadGuests = async () => {
+    const response = await adminFetch('/api/admin/guests');
+    if (!response.ok) throw new Error(await readApiError(response));
+    const invitations = await response.json();
+    guestList.replaceChildren();
+
+    const counts = { vou: 0, 'nao-vou': 0, 'a-confirmar': 0 };
+    invitations.forEach((invitation) => {
+      const row = document.createElement('article');
+      row.className = 'guest-row';
+      const title = document.createElement('h2');
+      title.textContent = invitation.name;
+      const detail = document.createElement('p');
+      const people = invitation.people || [];
+      people.forEach((person) => {
+        counts[person.status] = (counts[person.status] || 0) + 1;
+      });
+      detail.textContent = [invitation.groupName, `${people.length} pessoa(s)`, invitation.whatsApp].filter(Boolean).join(' · ');
+      row.append(title, detail);
+      guestList.append(row);
+    });
+
+    document.getElementById('adminGoing').textContent = counts.vou;
+    document.getElementById('adminNotGoing').textContent = counts['nao-vou'];
+    document.getElementById('adminPending').textContent = counts['a-confirmar'];
+    createForm.hidden = false;
+    message.textContent = `${invitations.length} convite(s) carregado(s).`;
+  };
+
+  connectForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    adminKey = keyInput.value;
+    message.textContent = 'Conectando...';
+    try {
+      await loadGuests();
+    } catch (error) {
+      adminKey = '';
+      message.textContent = error.message;
+    }
+  });
+
+  createForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const form = new FormData(createForm);
+    const allowFreeCompanions = form.get('allowFreeCompanions') === 'on';
+    const request = {
+      name: form.get('name').trim(),
+      groupName: form.get('groupName').trim() || null,
+      whatsApp: form.get('whatsApp').trim() || null,
+      companions: form.get('companions').split(/\r?\n/).map((name) => name.trim()).filter(Boolean),
+      allowFreeCompanions,
+      freeCompanionLimit: allowFreeCompanions ? Number(form.get('freeCompanionLimit')) : 0
+    };
+
+    try {
+      const response = await adminFetch('/api/admin/guests', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(request)
+      });
+      if (!response.ok) throw new Error(await readApiError(response));
+      createForm.reset();
+      createForm.elements.freeCompanionLimit.value = '0';
+      await loadGuests();
+      message.textContent = 'Convite cadastrado.';
+    } catch (error) {
+      message.textContent = error.message;
+    }
   });
 }
 

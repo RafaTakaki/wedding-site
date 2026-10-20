@@ -20,6 +20,9 @@ Thumbs.db
 # Ambiente
 .env
 appsettings.Development.json
+**/*service-account*.json
+**/*firebase-adminsdk*.json
+secrets/
 
 # Compilados
 *.dll

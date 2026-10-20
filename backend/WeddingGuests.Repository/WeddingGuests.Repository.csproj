@@ -7,6 +7,6 @@
   <ItemGroup>
     <ProjectReference Include="..\WeddingGuests.Application\WeddingGuests.Application.csproj" />
     <ProjectReference Include="..\WeddingGuests.Domain\WeddingGuests.Domain.csproj" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.13" />
+    <PackageReference Include="Google.Cloud.Firestore" Version="3.11.0" />
   </ItemGroup>
 </Project>

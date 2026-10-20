@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
   <title>Painel Administrativo</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -60,26 +61,128 @@
       font-size: 2.5rem;
       color: #7A4A52;
     }
+
+    .admin-form,
+    .guest-list {
+      margin-top: 2rem;
+      display: grid;
+      gap: 1rem;
+    }
+
+    .admin-form[hidden] {
+      display: none;
+    }
+
+    .admin-fields {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1rem;
+    }
+
+    .admin-fields label,
+    .admin-form > label {
+      display: grid;
+      gap: 0.4rem;
+      font-size: 0.8rem;
+      font-weight: 500;
+    }
+
+    .admin-fields input,
+    .admin-fields textarea,
+    .admin-form input[type="password"] {
+      width: 100%;
+      border: 1px solid rgba(122,74,82,0.18);
+      border-radius: 8px;
+      padding: 0.75rem;
+      background: #fff;
+      color: #7A4A52;
+    }
+
+    .admin-fields .wide {
+      grid-column: 1 / -1;
+    }
+
+    .admin-check {
+      display: flex !important;
+      align-items: center;
+      gap: 0.6rem !important;
+    }
+
+    .admin-form button {
+      width: fit-content;
+      border: 0;
+      border-radius: 8px;
+      padding: 0.8rem 1rem;
+      color: #fff;
+      background: #7A4A52;
+      cursor: pointer;
+    }
+
+    .admin-message {
+      min-height: 1.5rem;
+    }
+
+    .guest-row {
+      border-top: 1px solid rgba(122,74,82,0.14);
+      padding: 1rem 0;
+    }
+
+    .guest-row h2 {
+      font: 600 1.25rem 'Jost', sans-serif;
+      margin: 0 0 0.3rem;
+      color: #7A4A52;
+    }
+
+    .guest-row p {
+      font-size: 0.9rem;
+    }
+
+    @media (max-width: 640px) {
+      .grid,
+      .admin-fields {
+        grid-template-columns: 1fr;
+      }
+
+      .admin-fields .wide {
+        grid-column: auto;
+      }
+    }
   </style>
 </head>
-<body>
+<body data-page="admin" data-api-base="http://localhost:5000">
   <main class="container">
     <h1>Painel administrativo</h1>
 
-    <div class="grid">
-      <div class="card">
-        <strong>Vou</strong>
-        <span>48</span>
+    <form id="adminConnectForm" class="admin-form">
+      <label for="adminKey">Chave administrativa
+        <input id="adminKey" type="password" autocomplete="current-password" required>
+      </label>
+      <button type="submit">Carregar convidados</button>
+    </form>
+
+    <p id="adminMessage" class="admin-message" role="status" aria-live="polite"></p>
+
+    <section aria-label="Resumo de confirmações" class="grid">
+      <div class="card"><strong>Vou</strong><span id="adminGoing">0</span></div>
+      <div class="card"><strong>Não vou</strong><span id="adminNotGoing">0</span></div>
+      <div class="card"><strong>A confirmar</strong><span id="adminPending">0</span></div>
+    </section>
+
+    <form id="guestCreateForm" class="admin-form" hidden>
+      <h2>Novo convite</h2>
+      <div class="admin-fields">
+        <label>Nome do titular<input name="name" maxlength="120" required></label>
+        <label>Grupo<input name="groupName" maxlength="120"></label>
+        <label>WhatsApp<input name="whatsApp" maxlength="30" inputmode="tel"></label>
+        <label>Limite de acompanhantes livres<input name="freeCompanionLimit" type="number" min="0" max="5" value="0"></label>
+        <label class="wide">Acompanhantes fixos, um nome por linha<textarea name="companions" rows="3"></textarea></label>
+        <label class="admin-check wide"><input name="allowFreeCompanions" type="checkbox"> Permitir acompanhantes livres</label>
       </div>
-      <div class="card">
-        <strong>Não vou</strong>
-        <span>12</span>
-      </div>
-      <div class="card">
-        <strong>A confirmar</strong>
-        <span>90</span>
-      </div>
-    </div>
+      <button type="submit">Cadastrar convite</button>
+    </form>
+
+    <section id="guestList" class="guest-list" aria-label="Convidados cadastrados"></section>
   </main>
+  <script src="../js/script.js"></script>
 </body>
 </html>

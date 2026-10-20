@@ -3,6 +3,7 @@ namespace WeddingGuests.Domain.Entities;
 public sealed class GuestInvitation
 {
     public int Id { get; set; }
+    public required string RsvpToken { get; set; }
     public required string Name { get; set; }
     public required string NormalizedName { get; set; }
     public string? GroupName { get; set; }

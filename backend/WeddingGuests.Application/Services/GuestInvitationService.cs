@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Security.Cryptography;
 using System.Text;
 using WeddingGuests.Application.Abstractions;
 using WeddingGuests.Application.Contracts;
@@ -26,6 +27,7 @@ public sealed class GuestInvitationService(IGuestInvitationRepository repository
         ValidateInvitation(request);
         var invitation = new GuestInvitation
         {
+            RsvpToken = Convert.ToHexString(RandomNumberGenerator.GetBytes(32)).ToLowerInvariant(),
             Name = request.Name.Trim(),
             NormalizedName = NormalizeName(request.Name),
             GroupName = CleanOptional(request.GroupName),
@@ -44,7 +46,6 @@ public sealed class GuestInvitationService(IGuestInvitationRepository repository
         };
 
         await repository.AddAsync(invitation, cancellationToken);
-        await repository.SaveChangesAsync(cancellationToken);
         return ToAdminResponse(invitation);
     }
 
@@ -75,7 +76,7 @@ public sealed class GuestInvitationService(IGuestInvitationRepository repository
         }
 
         if (!invitation.AllowFreeCompanions) invitation.FreeCompanionLimit = 0;
-        await repository.SaveChangesAsync(cancellationToken);
+        await repository.SaveAsync(invitation, cancellationToken);
         return ToAdminResponse(invitation);
     }
 
@@ -96,8 +97,8 @@ public sealed class GuestInvitationService(IGuestInvitationRepository repository
             IsFreeCompanion = true,
             GuestInvitationId = invitation.Id
         };
-        await repository.AddInviteeAsync(companion, cancellationToken);
-        await repository.SaveChangesAsync(cancellationToken);
+        invitation.People.Add(companion);
+        await repository.SaveAsync(invitation, cancellationToken);
         return ToAdminResponse(invitation);
     }
 
@@ -107,8 +108,8 @@ public sealed class GuestInvitationService(IGuestInvitationRepository repository
         var companion = invitation?.People.FirstOrDefault(person => person.Id == personId && !person.IsPrimary);
         if (companion is null) throw NotFound("Acompanhante não encontrado.");
 
-        repository.RemoveInvitee(companion);
-        await repository.SaveChangesAsync(cancellationToken);
+        invitation!.People.Remove(companion);
+        await repository.SaveAsync(invitation, cancellationToken);
     }
 
     public async Task DeleteAsync(int invitationId, CancellationToken cancellationToken)
@@ -116,11 +117,14 @@ public sealed class GuestInvitationService(IGuestInvitationRepository repository
         var invitation = await repository.GetByIdAsync(invitationId, cancellationToken);
         if (invitation is null) throw NotFound("Convite não encontrado.");
 
-        repository.RemoveInvitation(invitation);
-        await repository.SaveChangesAsync(cancellationToken);
+        await repository.DeleteAsync(invitation, cancellationToken);
     }
 
-    public async Task<PublicInvitationResponse> LookupAsync(string? name, CancellationToken cancellationToken)
+    public async Task<PublicInvitationResponse> LookupAsync(
+        string? name,
+        DateTimeOffset deadline,
+        DateTimeOffset now,
+        CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(name) || name.Trim().Length > 120)
         {
@@ -140,11 +144,57 @@ public sealed class GuestInvitationService(IGuestInvitationRepository repository
 
         var invitation = matches[0];
         return new PublicInvitationResponse(
+            invitation.RsvpToken,
             invitation.Name,
+            now <= deadline,
             invitation.People.OrderByDescending(person => person.IsPrimary)
                 .ThenBy(person => person.Name)
-                .Select(person => new PublicInviteeResponse(person.Name, person.Status))
+                .Select(person => new PublicInviteeResponse(person.Id, person.Name, person.Status))
                 .ToArray());
+    }
+
+    public async Task SaveRsvpAsync(
+        string rsvpToken,
+        SaveRsvpRequest request,
+        DateTimeOffset deadline,
+        DateTimeOffset now,
+        CancellationToken cancellationToken)
+    {
+        if (now > deadline)
+        {
+            throw new GuestApplicationException("O prazo para confirmação terminou. Entre em contato com os noivos.", GuestApplicationException.Forbidden);
+        }
+
+        if (request.Answers.Count == 0 || request.Answers.Select(answer => answer.InviteeId).Distinct().Count() != request.Answers.Count)
+        {
+            throw new GuestApplicationException("Selecione respostas válidas para o convite.", GuestApplicationException.BadRequest);
+        }
+
+        var invitation = await repository.GetByRsvpTokenAsync(rsvpToken, cancellationToken)
+            ?? throw NotFound("Convite não encontrado.");
+        var peopleById = invitation.People.ToDictionary(person => person.Id);
+        foreach (var answer in request.Answers)
+        {
+            if (!peopleById.TryGetValue(answer.InviteeId, out var person))
+            {
+                throw new GuestApplicationException("Uma pessoa informada não pertence a este convite.", GuestApplicationException.BadRequest);
+            }
+
+            if (answer.Status is not ("vou" or "nao-vou" or "a-confirmar"))
+            {
+                throw new GuestApplicationException("Resposta de presença inválida.", GuestApplicationException.BadRequest);
+            }
+
+            if (person.Status != "a-confirmar" && answer.Status != person.Status)
+            {
+                throw new GuestApplicationException("Respostas já confirmadas só podem ser alteradas pela administração.", GuestApplicationException.Conflict);
+            }
+        }
+
+        if (!await repository.SaveRsvpAsync(rsvpToken, request.Answers, cancellationToken))
+        {
+            throw new GuestApplicationException("Uma ou mais respostas já foram registradas. Atualize o convite e tente novamente.", GuestApplicationException.Conflict);
+        }
     }
 
     private async Task<GuestInvitation> GetRequiredAsync(int invitationId, CancellationToken cancellationToken)

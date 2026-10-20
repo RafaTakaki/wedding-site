@@ -9,6 +9,7 @@ public static class GuestEndpoints
     {
         app.MapGet("/health", () => Results.Ok(new { status = "ok" }));
         app.MapGet("/api/guests/lookup", LookupAsync);
+        app.MapPost("/api/guests/rsvp/{rsvpToken}", SaveRsvpAsync);
 
         var admin = app.MapGroup("/api/admin").AddEndpointFilter<AdminKeyEndpointFilter>();
         admin.MapGet("/guests", ListAsync);
@@ -20,8 +21,30 @@ public static class GuestEndpoints
         admin.MapDelete("/guests/{invitationId:int}", DeleteAsync);
     }
 
-    private static async Task<IResult> LookupAsync(string? name, GuestInvitationService service, CancellationToken cancellationToken) =>
-        Results.Ok(await service.LookupAsync(name, cancellationToken));
+    private static async Task<IResult> LookupAsync(
+        string? name,
+        GuestInvitationService service,
+        IConfiguration configuration,
+        TimeProvider timeProvider,
+        CancellationToken cancellationToken) =>
+        Results.Ok(await service.LookupAsync(name, GetDeadline(configuration), timeProvider.GetUtcNow(), cancellationToken));
+
+    private static async Task<IResult> SaveRsvpAsync(
+        string rsvpToken,
+        WeddingGuests.Application.Contracts.SaveRsvpRequest request,
+        GuestInvitationService service,
+        IConfiguration configuration,
+        TimeProvider timeProvider,
+        CancellationToken cancellationToken)
+    {
+        await service.SaveRsvpAsync(rsvpToken, request, GetDeadline(configuration), timeProvider.GetUtcNow(), cancellationToken);
+        return Results.NoContent();
+    }
+
+    private static DateTimeOffset GetDeadline(IConfiguration configuration) =>
+        DateTimeOffset.TryParse(configuration["RSVP_DEADLINE"], out var deadline)
+            ? deadline
+            : new DateTimeOffset(2027, 6, 6, 23, 59, 0, TimeSpan.FromHours(-3));
 
     private static async Task<IResult> ListAsync(GuestInvitationService service, CancellationToken cancellationToken) =>
         Results.Ok(await service.ListAsync(cancellationToken));
