@@ -2,6 +2,7 @@
 bin/
 obj/
 TestResults/
+backend/**/data/
 
 # IDE
 .vscode/
