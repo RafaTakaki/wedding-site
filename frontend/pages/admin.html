@@ -137,9 +137,145 @@
       font-size: 0.9rem;
     }
 
+    .guest-actions,
+    .person-status-form {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.6rem;
+      margin-top: 0.75rem;
+    }
+
+    .guest-actions button,
+    .person-status-form button,
+    .guest-edit-form button {
+      border: 0;
+      border-radius: 6px;
+      padding: 0.55rem 0.75rem;
+      background: #7A4A52;
+      color: #fff;
+      cursor: pointer;
+    }
+
+    .guest-actions .danger {
+      background: #8a3434;
+    }
+
+    .person-row {
+      display: grid;
+      grid-template-columns: minmax(140px, 1fr) auto;
+      align-items: center;
+      gap: 0.75rem;
+      border-top: 1px solid rgba(122,74,82,0.1);
+      padding: 0.7rem 0;
+    }
+
+    .person-row select,
+    .guest-edit-form input {
+      border: 1px solid rgba(122,74,82,0.18);
+      border-radius: 6px;
+      padding: 0.5rem;
+      color: #7A4A52;
+      background: #fff;
+    }
+
+    .guest-edit-form {
+      display: grid;
+      gap: 0.7rem;
+      margin-top: 0.8rem;
+      padding: 1rem;
+      background: rgba(233,221,205,0.28);
+    }
+
+    .guest-edit-form[hidden] {
+      display: none;
+    }
+
+    .guest-edit-fields {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.65rem;
+    }
+
+    .guest-edit-fields label {
+      display: grid;
+      gap: 0.3rem;
+      font-size: 0.8rem;
+    }
+
+    .guest-edit-fields input[type="checkbox"] {
+      width: auto;
+    }
+
+    .gift-admin-list {
+      margin-top: 1rem;
+      display: grid;
+      gap: 0.75rem;
+    }
+
+    .gift-admin-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 0.75rem;
+      border-top: 1px solid rgba(122,74,82,0.12);
+      padding: 0.75rem 0;
+    }
+
+    .gift-admin-row p {
+      margin: 0.25rem 0 0;
+      font-size: 0.85rem;
+    }
+
+    .gift-admin-row button {
+      border: 0;
+      border-radius: 6px;
+      padding: 0.55rem 0.75rem;
+      background: #7A4A52;
+      color: #fff;
+      cursor: pointer;
+    }
+
+    .fixed-companion-form,
+    .fixed-companion-edit {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.7rem 0;
+      border-top: 1px solid rgba(122,74,82,0.1);
+    }
+
+    .fixed-companion-form input,
+    .fixed-companion-edit input {
+      flex: 1 1 180px;
+      min-width: 0;
+      border: 1px solid rgba(122,74,82,0.18);
+      border-radius: 6px;
+      padding: 0.55rem;
+      color: #7A4A52;
+      background: #fff;
+    }
+
+    .fixed-companion-form button,
+    .fixed-companion-edit button {
+      border: 0;
+      border-radius: 6px;
+      padding: 0.55rem 0.75rem;
+      background: #7A4A52;
+      color: #fff;
+      cursor: pointer;
+    }
+
+    .fixed-companion-edit .danger {
+      background: #8a3434;
+    }
+
     @media (max-width: 640px) {
       .grid,
-      .admin-fields {
+      .admin-fields,
+      .guest-edit-fields,
+      .person-row {
         grid-template-columns: 1fr;
       }
 
@@ -181,7 +317,22 @@
       <button type="submit">Cadastrar convite</button>
     </form>
 
+    <p id="guestActionMessage" class="admin-message" role="status" aria-live="polite"></p>
+
     <section id="guestList" class="guest-list" aria-label="Convidados cadastrados"></section>
+
+    <section id="giftAdminSection" class="admin-form" hidden aria-labelledby="giftAdminTitle">
+      <h2 id="giftAdminTitle">Lista de presentes simbólicos</h2>
+      <p>O cadastro cria opções fictícias com valor sugerido. Nenhuma cobrança é iniciada pelo site.</p>
+      <form id="giftCreateForm" class="admin-fields">
+        <label>Nome do item<input name="name" maxlength="120" required></label>
+        <label>Valor sugerido (R$)<input name="amount" type="number" min="0.01" max="1000000" step="0.01" required></label>
+        <label class="wide">Descrição<textarea name="description" maxlength="500" rows="2" required></textarea></label>
+        <label class="wide">URL da imagem (opcional, HTTPS)<input name="imageUrl" type="url" maxlength="1000"></label>
+        <button type="submit">Cadastrar presente</button>
+      </form>
+      <div id="giftAdminList" class="gift-admin-list" aria-label="Itens cadastrados"></div>
+    </section>
   </main>
   <script src="../js/script.js"></script>
 </body>

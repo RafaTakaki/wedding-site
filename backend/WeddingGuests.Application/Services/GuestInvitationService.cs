@@ -102,11 +102,47 @@ public sealed class GuestInvitationService(IGuestInvitationRepository repository
         return ToAdminResponse(invitation);
     }
 
+    public async Task<AdminInvitationResponse> AddFixedCompanionAsync(
+        int invitationId,
+        AddCompanionRequest request,
+        CancellationToken cancellationToken)
+    {
+        ValidateName(request.Name, "Informe o nome do acompanhante, com até 120 caracteres.");
+        var invitation = await GetRequiredAsync(invitationId, cancellationToken);
+        invitation.People.Add(new Invitee
+        {
+            Name = request.Name.Trim(),
+            NormalizedName = NormalizeName(request.Name),
+            GuestInvitationId = invitation.Id,
+            IsFreeCompanion = false
+        });
+        await repository.SaveAsync(invitation, cancellationToken);
+        return ToAdminResponse(invitation);
+    }
+
+    public async Task<AdminInvitationResponse> UpdateFixedCompanionAsync(
+        int invitationId,
+        int personId,
+        UpdateCompanionRequest request,
+        CancellationToken cancellationToken)
+    {
+        ValidateName(request.Name, "Informe o nome do acompanhante, com até 120 caracteres.");
+        var invitation = await GetRequiredAsync(invitationId, cancellationToken);
+        var companion = invitation.People.FirstOrDefault(person =>
+            person.Id == personId && !person.IsPrimary && !person.IsFreeCompanion);
+        if (companion is null) throw NotFound("Acompanhante fixo não encontrado neste convite.");
+
+        companion.Name = request.Name.Trim();
+        companion.NormalizedName = NormalizeName(request.Name);
+        await repository.SaveAsync(invitation, cancellationToken);
+        return ToAdminResponse(invitation);
+    }
+
     public async Task DeleteCompanionAsync(int invitationId, int personId, CancellationToken cancellationToken)
     {
         var invitation = await repository.GetByIdAsync(invitationId, cancellationToken);
-        var companion = invitation?.People.FirstOrDefault(person => person.Id == personId && !person.IsPrimary);
-        if (companion is null) throw NotFound("Acompanhante não encontrado.");
+        var companion = invitation?.People.FirstOrDefault(person => person.Id == personId && !person.IsPrimary && !person.IsFreeCompanion);
+        if (companion is null) throw NotFound("Acompanhante fixo não encontrado neste convite.");
 
         invitation!.People.Remove(companion);
         await repository.SaveAsync(invitation, cancellationToken);
@@ -118,6 +154,29 @@ public sealed class GuestInvitationService(IGuestInvitationRepository repository
         if (invitation is null) throw NotFound("Convite não encontrado.");
 
         await repository.DeleteAsync(invitation, cancellationToken);
+    }
+
+    public async Task UpdateInviteeStatusAsync(
+        int invitationId,
+        int inviteeId,
+        UpdateInviteeStatusRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (!IsValidStatus(request.Status))
+        {
+            throw new GuestApplicationException("Resposta de presença inválida.", GuestApplicationException.BadRequest);
+        }
+
+        var invitation = await GetRequiredAsync(invitationId, cancellationToken);
+        if (invitation.People.All(person => person.Id != inviteeId))
+        {
+            throw NotFound("Pessoa não encontrada neste convite.");
+        }
+
+        if (!await repository.UpdateInviteeStatusAsync(invitationId, inviteeId, request.Status, cancellationToken))
+        {
+            throw NotFound("Pessoa não encontrada neste convite.");
+        }
     }
 
     public async Task<PublicInvitationResponse> LookupAsync(
@@ -143,14 +202,41 @@ public sealed class GuestInvitationService(IGuestInvitationRepository repository
         }
 
         var invitation = matches[0];
-        return new PublicInvitationResponse(
-            invitation.RsvpToken,
-            invitation.Name,
-            now <= deadline,
-            invitation.People.OrderByDescending(person => person.IsPrimary)
-                .ThenBy(person => person.Name)
-                .Select(person => new PublicInviteeResponse(person.Id, person.Name, person.Status))
-                .ToArray());
+        return ToPublicResponse(invitation, now <= deadline);
+    }
+
+    public async Task<PublicInvitationResponse> AddFreeCompanionAsync(
+        string rsvpToken,
+        AddCompanionRequest request,
+        DateTimeOffset deadline,
+        DateTimeOffset now,
+        CancellationToken cancellationToken)
+    {
+        if (now > deadline)
+        {
+            throw new GuestApplicationException("O prazo para confirmação terminou. Entre em contato com os noivos.", GuestApplicationException.Forbidden);
+        }
+
+        ValidateName(request.Name, "Informe o nome do acompanhante, com até 120 caracteres.");
+        var invitation = await repository.GetByRsvpTokenAsync(rsvpToken, cancellationToken)
+            ?? throw NotFound("Convite não encontrado.");
+        var slots = invitation.FreeCompanionLimit - invitation.People.Count(person => person.IsFreeCompanion);
+        if (!invitation.AllowFreeCompanions || slots <= 0)
+        {
+            throw new GuestApplicationException("Este convite não permite adicionar mais acompanhantes.", GuestApplicationException.Conflict);
+        }
+
+        var updatedInvitation = await repository.AddFreeCompanionAsync(
+            rsvpToken,
+            request.Name.Trim(),
+            NormalizeName(request.Name),
+            cancellationToken);
+        if (updatedInvitation is null)
+        {
+            throw new GuestApplicationException("O limite de acompanhantes livres foi atingido. Atualize o convite.", GuestApplicationException.Conflict);
+        }
+
+        return ToPublicResponse(updatedInvitation, true);
     }
 
     public async Task SaveRsvpAsync(
@@ -180,7 +266,7 @@ public sealed class GuestInvitationService(IGuestInvitationRepository repository
                 throw new GuestApplicationException("Uma pessoa informada não pertence a este convite.", GuestApplicationException.BadRequest);
             }
 
-            if (answer.Status is not ("vou" or "nao-vou" or "a-confirmar"))
+            if (!IsValidStatus(answer.Status))
             {
                 throw new GuestApplicationException("Resposta de presença inválida.", GuestApplicationException.BadRequest);
             }
@@ -251,6 +337,8 @@ public sealed class GuestInvitationService(IGuestInvitationRepository repository
 
     private static string? CleanOptional(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 
+    private static bool IsValidStatus(string status) => status is "vou" or "nao-vou" or "a-confirmar";
+
     private static GuestApplicationException NotFound(string message) => new(message, GuestApplicationException.NotFound);
 
     private static AdminInvitationResponse ToAdminResponse(GuestInvitation invitation) => new(
@@ -263,5 +351,16 @@ public sealed class GuestInvitationService(IGuestInvitationRepository repository
         invitation.People.OrderByDescending(person => person.IsPrimary)
             .ThenBy(person => person.Name)
             .Select(person => new AdminInviteeResponse(person.Id, person.Name, person.IsPrimary, person.IsFreeCompanion, person.Status))
+            .ToArray());
+
+    private static PublicInvitationResponse ToPublicResponse(GuestInvitation invitation, bool isRsvpOpen) => new(
+        invitation.RsvpToken,
+        invitation.Name,
+        isRsvpOpen,
+        invitation.AllowFreeCompanions,
+        Math.Max(0, invitation.FreeCompanionLimit - invitation.People.Count(person => person.IsFreeCompanion)),
+        invitation.People.OrderByDescending(person => person.IsPrimary)
+            .ThenBy(person => person.Name)
+            .Select(person => new PublicInviteeResponse(person.Id, person.Name, person.Status))
             .ToArray());
 }

@@ -5,6 +5,7 @@ using WeddingGuests.Application.Abstractions;
 using WeddingGuests.Application.Exceptions;
 using WeddingGuests.Application.Services;
 using WeddingGuests.Repository.Repositories;
+using WeddingGuests.Api.Payments;
 
 LoadEnvironmentFile();
 var builder = WebApplication.CreateBuilder(args);
@@ -18,6 +19,9 @@ if (string.IsNullOrWhiteSpace(projectId))
 builder.Services.AddSingleton(FirestoreDb.Create(projectId));
 builder.Services.AddScoped<IGuestInvitationRepository, FirestoreGuestInvitationRepository>();
 builder.Services.AddScoped<GuestInvitationService>();
+builder.Services.AddScoped<IGiftRepository, FirestoreGiftRepository>();
+builder.Services.AddScoped<GiftService>();
+builder.Services.AddSingleton<PagSeguroPaymentService>();
 builder.Services.AddSingleton(TimeProvider.System);
 var allowedOrigins = (builder.Configuration["FRONTEND_ORIGINS"] ?? "http://localhost:5500,http://127.0.0.1:5500")
     .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);

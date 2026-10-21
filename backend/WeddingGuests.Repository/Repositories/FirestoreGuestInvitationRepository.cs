@@ -92,6 +92,67 @@ public sealed class FirestoreGuestInvitationRepository(FirestoreDb firestore) : 
         }, cancellationToken: cancellationToken);
     }
 
+    public async Task<bool> UpdateInviteeStatusAsync(int invitationId, int inviteeId, string status, CancellationToken cancellationToken)
+    {
+        var invitationReference = firestore.Collection(InvitationsCollection).Document(invitationId.ToString());
+        return await firestore.RunTransactionAsync(async transaction =>
+        {
+            var snapshot = await transaction.GetSnapshotAsync(invitationReference, cancellationToken);
+            if (!snapshot.Exists) return false;
+
+            var invitation = snapshot.ConvertTo<InvitationDocument>();
+            var person = invitation.People.FirstOrDefault(item => item.Id == inviteeId);
+            if (person is null) return false;
+
+            person.Status = status;
+            transaction.Set(invitationReference, invitation);
+            return true;
+        }, cancellationToken: cancellationToken);
+    }
+
+    public async Task<GuestInvitation?> AddFreeCompanionAsync(
+        string token,
+        string name,
+        string normalizedName,
+        CancellationToken cancellationToken)
+    {
+        var tokenReference = firestore.Collection(RsvpTokensCollection).Document(token);
+        var result = await firestore.RunTransactionAsync(async transaction =>
+        {
+            var tokenSnapshot = await transaction.GetSnapshotAsync(tokenReference, cancellationToken);
+            if (!tokenSnapshot.Exists) return null;
+
+            var tokenDocument = tokenSnapshot.ConvertTo<RsvpTokenDocument>();
+            var invitationReference = firestore.Collection(InvitationsCollection).Document(tokenDocument.InvitationId.ToString());
+            var invitationSnapshot = await transaction.GetSnapshotAsync(invitationReference, cancellationToken);
+            if (!invitationSnapshot.Exists) return null;
+
+            var counterReference = firestore.Collection(CountersCollection).Document("inviteeCounter");
+            var counterSnapshot = await transaction.GetSnapshotAsync(counterReference, cancellationToken);
+            var invitation = invitationSnapshot.ConvertTo<InvitationDocument>();
+            var freeCount = invitation.People.Count(person => person.IsFreeCompanion);
+            if (!invitation.AllowFreeCompanions || freeCount >= invitation.FreeCompanionLimit) return null;
+
+            var lastId = counterSnapshot.Exists ? counterSnapshot.GetValue<int>(nameof(CounterDocument.LastId)) : 0;
+            var inviteeId = checked(lastId + 1);
+            invitation.People.Add(new InviteeDocument
+            {
+                Id = inviteeId,
+                GuestInvitationId = invitation.Id,
+                Name = name,
+                NormalizedName = normalizedName,
+                IsFreeCompanion = true,
+                Status = "a-confirmar"
+            });
+
+            transaction.Set(counterReference, new CounterDocument { LastId = inviteeId });
+            transaction.Set(invitationReference, invitation);
+            return invitation;
+        }, cancellationToken: cancellationToken);
+
+        return result is null ? null : FromDocument(result);
+    }
+
     public async Task<bool> SaveRsvpAsync(string token, IReadOnlyList<RsvpAnswerRequest> answers, CancellationToken cancellationToken)
     {
         var tokenReference = firestore.Collection(RsvpTokensCollection).Document(token);

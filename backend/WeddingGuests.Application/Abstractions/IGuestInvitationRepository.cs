@@ -12,5 +12,7 @@ public interface IGuestInvitationRepository
     Task AddAsync(GuestInvitation invitation, CancellationToken cancellationToken);
     Task SaveAsync(GuestInvitation invitation, CancellationToken cancellationToken);
     Task DeleteAsync(GuestInvitation invitation, CancellationToken cancellationToken);
+    Task<bool> UpdateInviteeStatusAsync(int invitationId, int inviteeId, string status, CancellationToken cancellationToken);
+    Task<GuestInvitation?> AddFreeCompanionAsync(string token, string name, string normalizedName, CancellationToken cancellationToken);
     Task<bool> SaveRsvpAsync(string token, IReadOnlyList<RsvpAnswerRequest> answers, CancellationToken cancellationToken);
 }
